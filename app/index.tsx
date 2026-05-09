@@ -1,5 +1,12 @@
 import { router } from "expo-router";
-import { View, Text, Pressable } from "react-native";
+
+import {
+  View,
+  Text,
+  Image,
+} from "react-native";
+
+import { PrimaryButton } from "../components/ui/PrimaryButton";
 
 export default function Index() {
   return (
@@ -12,15 +19,26 @@ export default function Index() {
         padding: 24,
       }}
     >
+      <Image
+        source={require("./assets/images/icon.png")}
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 28,
+          marginBottom: 24,
+        }}
+      />
+
       <Text
         style={{
           color: "white",
-          fontSize: 32,
+          fontSize: 48,
           fontWeight: "bold",
           marginBottom: 12,
+          letterSpacing: 1,
         }}
       >
-        Fitness Transform
+        FORMA
       </Text>
 
       <Text
@@ -28,31 +46,21 @@ export default function Index() {
           color: "#9A9A9A",
           fontSize: 16,
           textAlign: "center",
-          marginBottom: 32,
+          marginBottom: 40,
+          lineHeight: 24,
         }}
       >
-        A simple transformation plan to lose fat, build muscle, and track your progress.
+        Minimal fitness. Maximum consistency.
       </Text>
 
-      <Pressable
+      <PrimaryButton
         onPress={() => router.push("/onboarding")}
         style={{
-          backgroundColor: "#00FFB2",
-          paddingVertical: 16,
-          paddingHorizontal: 40,
-          borderRadius: 16,
+          minWidth: 180,
         }}
       >
-        <Text
-          style={{
-            color: "#0B0B0B",
-            fontSize: 16,
-            fontWeight: "bold",
-          }}
-        >
-          Start
-        </Text>
-      </Pressable>
+        Start
+      </PrimaryButton>
     </View>
   );
 }
