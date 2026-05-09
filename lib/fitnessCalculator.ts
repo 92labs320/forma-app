@@ -54,3 +54,31 @@ export function getFitnessProfile(bmi: number | null) {
 
   return "High Fat Loss Priority";
 }
+
+export function calculateWeightRemaining(
+  currentWeight: string,
+  targetWeight: string
+) {
+  const current = Number(currentWeight);
+  const target = Number(targetWeight);
+
+  if (!current || !target) return null;
+
+  return Math.abs(current - target).toFixed(1);
+}
+
+export function estimateTimeline(
+  currentWeight: string,
+  targetWeight: string
+) {
+  const remaining = calculateWeightRemaining(
+    currentWeight,
+    targetWeight
+  );
+
+  if (!remaining) return null;
+
+  const weeks = Math.ceil(Number(remaining) / 0.5);
+
+  return `${weeks} weeks`;
+}

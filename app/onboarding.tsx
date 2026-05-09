@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useOnboardingStore } from "../store/onboardingStore";
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 6;
 
 const goals = [
   "Lose Fat",
@@ -24,11 +24,13 @@ export default function Onboarding() {
     age,
     height,
     weight,
+    targetWeight,
     setGoal,
     setGender,
     setAge,
     setHeight,
     setWeight,
+    setTargetWeight,
   } = useOnboardingStore();
 
   const progress = (step / TOTAL_STEPS) * 100;
@@ -38,17 +40,18 @@ export default function Onboarding() {
     (step === 2 && !gender) ||
     (step === 3 && !age) ||
     (step === 4 && !height) ||
-    (step === 5 && !weight);
+    (step === 5 && !weight) ||
+    (step === 6 && !targetWeight);
 
   const goNext = () => {
     if (isDisabled) return;
 
-    if (step < 5) {
+    if (step < TOTAL_STEPS) {
       setStep(step + 1);
       return;
     }
 
-    router.push("/dashboard");
+    router.push("/(tabs)/dashboard");
   };
 
   const goBack = () => {
@@ -145,7 +148,6 @@ export default function Onboarding() {
         justifyContent: "center",
       }}
     >
-      {/* PROGRESS BAR */}
       <View
         style={{
           height: 8,
@@ -164,77 +166,38 @@ export default function Onboarding() {
         />
       </View>
 
-      <Text
-        style={{
-          color: "#00FFB2",
-          fontSize: 14,
-          marginBottom: 12,
-        }}
-      >
+      <Text style={{ color: "#00FFB2", fontSize: 14, marginBottom: 12 }}>
         Step {step} of {TOTAL_STEPS}
       </Text>
 
-      {/* STEP 1 */}
       {step === 1 && (
         <>
-          <Text
-            style={{
-              color: "white",
-              fontSize: 32,
-              fontWeight: "bold",
-              marginBottom: 12,
-            }}
-          >
+          <Text style={{ color: "white", fontSize: 32, fontWeight: "bold", marginBottom: 12 }}>
             What is your goal?
           </Text>
 
-          <Text
-            style={{
-              color: "#9A9A9A",
-              fontSize: 16,
-              marginBottom: 32,
-            }}
-          >
+          <Text style={{ color: "#9A9A9A", fontSize: 16, marginBottom: 32 }}>
             Choose your main transformation goal.
           </Text>
 
-          {goals.map((item) =>
-            renderOption(item, goal, setGoal)
-          )}
+          {goals.map((item) => renderOption(item, goal, setGoal))}
         </>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && (
         <>
-          <Text
-            style={{
-              color: "white",
-              fontSize: 32,
-              fontWeight: "bold",
-              marginBottom: 12,
-            }}
-          >
+          <Text style={{ color: "white", fontSize: 32, fontWeight: "bold", marginBottom: 12 }}>
             Gender
           </Text>
 
-          <Text
-            style={{
-              color: "#9A9A9A",
-              fontSize: 16,
-              marginBottom: 32,
-            }}
-          >
+          <Text style={{ color: "#9A9A9A", fontSize: 16, marginBottom: 32 }}>
             Select your gender.
           </Text>
 
-          {genders.map((item) =>
-            renderOption(item, gender, setGender)
-          )}
+          {genders.map((item) => renderOption(item, gender, setGender))}
         </>
       )}
 
-      {/* STEP 3 */}
       {step === 3 &&
         renderInputStep(
           "Your Age",
@@ -244,7 +207,6 @@ export default function Onboarding() {
           setAge
         )}
 
-      {/* STEP 4 */}
       {step === 4 &&
         renderInputStep(
           "Your Height",
@@ -254,7 +216,6 @@ export default function Onboarding() {
           setHeight
         )}
 
-      {/* STEP 5 */}
       {step === 5 &&
         renderInputStep(
           "Your Weight",
@@ -264,7 +225,15 @@ export default function Onboarding() {
           setWeight
         )}
 
-      {/* BUTTONS */}
+      {step === 6 &&
+        renderInputStep(
+          "Target Weight",
+          "Enter your target weight in kilograms.",
+          "Target weight in kg",
+          targetWeight,
+          setTargetWeight
+        )}
+
       <View
         style={{
           flexDirection: "row",
@@ -282,14 +251,7 @@ export default function Onboarding() {
               borderRadius: 16,
             }}
           >
-            <Text
-              style={{
-                color: "white",
-                fontWeight: "bold",
-              }}
-            >
-              Back
-            </Text>
+            <Text style={{ color: "white", fontWeight: "bold" }}>Back</Text>
           </Pressable>
         ) : (
           <View />
@@ -299,9 +261,7 @@ export default function Onboarding() {
           disabled={isDisabled}
           onPress={goNext}
           style={{
-            backgroundColor: isDisabled
-              ? "#333333"
-              : "#00FFB2",
+            backgroundColor: isDisabled ? "#333333" : "#00FFB2",
             paddingVertical: 16,
             paddingHorizontal: 32,
             borderRadius: 16,
@@ -309,9 +269,7 @@ export default function Onboarding() {
         >
           <Text
             style={{
-              color: isDisabled
-                ? "#777777"
-                : "#0B0B0B",
+              color: isDisabled ? "#777777" : "#0B0B0B",
               fontWeight: "bold",
             }}
           >
