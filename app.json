@@ -4,12 +4,12 @@
     "slug": "forma",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./app/assets/images/icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "forma",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "bundleIdentifier": "com.forma.fitness",
+      "bundleIdentifier": "com.djokokamdem.forma",
       "buildNumber": "1",
       "supportsTablet": false,
       "userInterfaceStyle": "dark",
@@ -49,6 +49,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "620ce34e-a178-4f53-800d-8e3f563af70a"
+      }
+    },
+    "owner": "92labs320"
   }
 }

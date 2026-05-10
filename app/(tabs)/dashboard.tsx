@@ -12,10 +12,7 @@ import {
   calculateProtein,
   getFitnessProfile,
   calculateWeightRemaining,
-  estimateTimeline,
 } from "../../lib/fitnessCalculator";
-
-import { getWorkoutPlan } from "../../data/workoutPlans";
 
 function getDateKey(date: Date) {
   const year = date.getFullYear();
@@ -37,9 +34,7 @@ export default function Dashboard() {
   const calories = calculateCalories(gender, age, weight, height, goal);
   const protein = calculateProtein(weight);
   const fitnessProfile = getFitnessProfile(bmi);
-  const workoutPlan = getWorkoutPlan(goal);
   const weightRemaining = calculateWeightRemaining(weight, targetWeight);
-  const estimatedTimeline = estimateTimeline(weight, targetWeight);
   const streak = getCurrentStreak();
   const trainedToday = completedWorkoutDates.includes(getDateKey(new Date()));
 
@@ -76,7 +71,7 @@ export default function Dashboard() {
           transform: [{ translateY: screenTranslateY }],
         }}
       >
-        <View style={{ marginBottom: 26 }}>
+        <View style={{ marginBottom: 22 }}>
           <Text
             style={{
               color: "white",
@@ -89,11 +84,11 @@ export default function Dashboard() {
           </Text>
 
           <Text style={{ color: "#8E8E8E", fontSize: 16, lineHeight: 22 }}>
-            Your daily plan, built around consistency.
+            Focus on today. Build the streak.
           </Text>
         </View>
 
-        <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
           <AnimatedMetricCard
             delay={0}
             label="Calories"
@@ -110,7 +105,7 @@ export default function Dashboard() {
           />
         </View>
 
-        <View style={{ flexDirection: "row", gap: 12, marginBottom: 26 }}>
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
           <AnimatedMetricCard
             delay={160}
             label="BMI"
@@ -128,12 +123,51 @@ export default function Dashboard() {
           />
         </View>
 
+        <PremiumCard compact>
+          <Text
+            style={{
+              color: "#00E6A4",
+              fontSize: 11,
+              fontWeight: "800",
+              letterSpacing: 1.1,
+              marginBottom: 16,
+              opacity: 0.82,
+            }}
+          >
+            DAILY ACTIVITY
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <ProgressRing
+              delay={120}
+              label="Calories"
+              progress={0.72}
+            />
+            <ProgressRing
+              delay={220}
+              label="Protein"
+              progress={0.64}
+            />
+            <ProgressRing
+              delay={320}
+              label="Consistency"
+              progress={Math.min(streak / 7, 1)}
+            />
+          </View>
+        </PremiumCard>
+
         <PremiumCard accent>
           <SectionHeader
             title="Today's Goal"
             subtitle={
               trainedToday
-                ? "Workout logged. Keep the day clean with protein and hydration."
+                ? "Workout logged. Keep the day clean."
                 : "Complete one planned workout to protect your streak."
             }
           />
@@ -204,48 +238,21 @@ export default function Dashboard() {
               elevation: 2,
             }}
           >
-            View Workouts
+            Start Workout
           </PrimaryButton>
         </PremiumCard>
 
         <PremiumCard>
-          <SectionHeader
-            title="Smart Plan"
-            subtitle="Targets calibrated from your profile."
-          />
-          <InfoRow label="Fitness Profile" value={fitnessProfile} />
-          <InfoRow label="Daily Calories" value={calories ? `${calories} kcal` : "-"} />
-          <InfoRow label="Protein Target" value={protein ? `${protein} g/day` : "-"} />
-        </PremiumCard>
+          <SectionHeader title="Transformation" />
 
-        <PremiumCard>
-          <SectionHeader
-            title="Workout Summary"
-            subtitle="Your current training structure."
-          />
-          <InfoRow label="Plan" value={workoutPlan.name} />
-          <InfoRow label="Days / Week" value={`${workoutPlan.daysPerWeek}`} />
-          <InfoRow label="Split" value={workoutPlan.split} />
-          <InfoRow label="Cardio" value={workoutPlan.cardio} />
-          <InfoRow label="Focus" value={workoutPlan.description} />
-        </PremiumCard>
-
-        <PremiumCard>
-          <SectionHeader
-            title="Transformation"
-            subtitle="Your weight target at a glance."
-          />
-
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-            <MiniTile label="Current" value={`${weight || "-"} kg`} />
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <MiniTile label="Current" value={`${weight || "-"} kg`} accent />
             <MiniTile label="Target" value={`${targetWeight || "-"} kg`} />
+            <MiniTile
+              label="Left"
+              value={weightRemaining ? `${weightRemaining} kg` : "-"}
+            />
           </View>
-
-          <InfoRow
-            label="Remaining Weight"
-            value={weightRemaining ? `${weightRemaining} kg` : "-"}
-          />
-          <InfoRow label="Estimated Timeline" value={estimatedTimeline || "-"} />
         </PremiumCard>
       </Animated.View>
     </ScrollView>
@@ -255,27 +262,155 @@ export default function Dashboard() {
 function PremiumCard({
   children,
   accent = false,
+  compact = false,
 }: {
   children: ReactNode;
   accent?: boolean;
+  compact?: boolean;
 }) {
   return (
     <View
       style={{
         backgroundColor: "#131313",
-        padding: 22,
+        padding: compact ? 16 : 20,
         borderRadius: 24,
         borderWidth: 1,
         borderColor: accent ? "rgba(0, 255, 178, 0.22)" : "#242424",
-        marginBottom: 22,
+        marginBottom: 18,
         shadowColor: accent ? "#00FFB2" : "#000000",
-        shadowOpacity: accent ? 0.08 : 0.22,
-        shadowRadius: accent ? 16 : 18,
+        shadowOpacity: accent ? 0.06 : 0.22,
+        shadowRadius: accent ? 12 : 18,
         shadowOffset: { width: 0, height: 10 },
-        elevation: accent ? 3 : 2,
+        elevation: accent ? 2 : 2,
       }}
     >
       {children}
+    </View>
+  );
+}
+
+function ProgressRing({
+  delay,
+  label,
+  progress,
+}: {
+  delay: number;
+  label: string;
+  progress: number;
+}) {
+  const ringProgress = useRef(new Animated.Value(0)).current;
+  const size = 68;
+  const stroke = 6;
+  const ringColor = "#00E6A4";
+  const clampedProgress = Math.max(0, Math.min(progress, 1));
+  const percent = Math.round(clampedProgress * 100);
+
+  useEffect(() => {
+    Animated.timing(ringProgress, {
+      toValue: clampedProgress,
+      duration: 760,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, [clampedProgress, delay, ringProgress]);
+
+  const firstHalfRotation = ringProgress.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ["-135deg", "45deg", "45deg"],
+  });
+  const secondHalfRotation = ringProgress.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ["-135deg", "-135deg", "45deg"],
+  });
+
+  return (
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <View
+        style={{
+          width: size,
+          height: size,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 10,
+        }}
+      >
+        <View
+          style={{
+            position: "absolute",
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: stroke,
+            borderColor: "#252525",
+          }}
+        />
+
+        <Animated.View
+          style={{
+            position: "absolute",
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: stroke,
+            borderColor: "transparent",
+            borderRightColor: ringColor,
+            borderTopColor: ringColor,
+            opacity: 0.74,
+            transform: [{ rotate: firstHalfRotation }],
+          }}
+        />
+
+        {clampedProgress > 0.5 ? (
+          <Animated.View
+            style={{
+              position: "absolute",
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              borderWidth: stroke,
+              borderColor: "transparent",
+              borderRightColor: ringColor,
+              borderTopColor: ringColor,
+              opacity: 0.74,
+              transform: [{ rotate: secondHalfRotation }],
+            }}
+          />
+        ) : null}
+
+        <View
+          style={{
+            width: size - stroke * 2 - 8,
+            height: size - stroke * 2 - 8,
+            borderRadius: (size - stroke * 2 - 8) / 2,
+            backgroundColor: "#0B0B0B",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontSize: 16,
+              fontWeight: "800",
+            }}
+          >
+            {percent}%
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{
+          color: "#8E8E8E",
+          fontSize: 12,
+          fontWeight: "700",
+          textAlign: "center",
+        }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -374,9 +509,9 @@ function AnimatedMetricCard({
     >
       <View
         style={{
-          minHeight: 154,
+          minHeight: 134,
           backgroundColor: "#131313",
-          padding: 18,
+          padding: 16,
           borderRadius: 22,
           borderWidth: 1,
           borderColor: accent ? "rgba(0, 255, 178, 0.3)" : "#242424",
@@ -392,7 +527,7 @@ function AnimatedMetricCard({
             color: "#8E8E8E",
             fontSize: 13,
             fontWeight: "700",
-            marginBottom: 12,
+            marginBottom: 10,
           }}
         >
           {label}
@@ -400,7 +535,7 @@ function AnimatedMetricCard({
         <Text
           style={{
             color: "white",
-            fontSize: 29,
+            fontSize: 27,
             fontWeight: "800",
             marginBottom: 6,
           }}
@@ -414,7 +549,7 @@ function AnimatedMetricCard({
             fontSize: 13,
             fontWeight: accent ? "800" : "600",
             lineHeight: 18,
-            minHeight: 36,
+            minHeight: 32,
           }}
         >
           {detail}
@@ -425,7 +560,7 @@ function AnimatedMetricCard({
             backgroundColor: "#252525",
             borderRadius: 999,
             overflow: "hidden",
-            marginTop: 14,
+            marginTop: 12,
           }}
         >
           <Animated.View
@@ -442,61 +577,43 @@ function AnimatedMetricCard({
   );
 }
 
-function MiniTile({ label, value }: { label: string; value: string }) {
+function MiniTile({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <View
       style={{
         flex: 1,
         backgroundColor: "#0B0B0B",
-        borderRadius: 18,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: "#242424",
-        padding: 16,
+        borderColor: accent ? "rgba(0, 255, 178, 0.35)" : "#242424",
+        padding: 14,
       }}
     >
       <Text
         style={{
           color: "#777777",
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: "700",
-          marginBottom: 8,
+          marginBottom: 7,
         }}
       >
         {label}
       </Text>
-      <Text style={{ color: "white", fontSize: 19, fontWeight: "800" }}>
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View
-      style={{
-        paddingVertical: 14,
-        borderTopWidth: 1,
-        borderTopColor: "#242424",
-      }}
-    >
       <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
         style={{
-          color: "#777777",
-          fontSize: 14,
-          fontWeight: "600",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </Text>
-
-      <Text
-        style={{
-          color: "white",
-          fontSize: 16,
-          fontWeight: "700",
-          lineHeight: 23,
+          color: accent ? "#00FFB2" : "white",
+          fontSize: 17,
+          fontWeight: "800",
         }}
       >
         {value}
