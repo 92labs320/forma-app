@@ -1,8 +1,11 @@
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 
 import { useOnboardingStore } from "../../store/onboardingStore";
 import { useProgressStore } from "../../store/progressStore";
 import { useWorkoutStore } from "../../store/workoutStore";
+
+const PRIVACY_POLICY_URL =
+  "https://low-cyclone-19f.notion.site/FORMA-Privacy-Policy-35ce10ed0554806a8d04ef8f11fdde21?source=copy_link";
 
 export default function Settings() {
   const goal = useOnboardingStore((state) => state.goal);
@@ -56,6 +59,10 @@ export default function Settings() {
       "FORMA Pro",
       "Premium features are not available yet."
     );
+  };
+
+  const openPrivacyPolicy = () => {
+    Linking.openURL(PRIVACY_POLICY_URL);
   };
 
   return (
@@ -137,7 +144,11 @@ export default function Settings() {
 
       <Card title="App">
         <Item label="Version" value="1.0" />
-        <Item label="Privacy Policy" value="Available soon" />
+        <InteractiveItem
+          label="Privacy Policy"
+          value="View policy"
+          onPress={openPrivacyPolicy}
+        />
         <Item label="Contact Support" value="support@forma.app" />
       </Card>
 
@@ -256,5 +267,64 @@ function Item({ label, value }: { label: string; value: string }) {
         {value}
       </Text>
     </View>
+  );
+}
+
+function InteractiveItem({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.032)",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            color: "#777777",
+            fontSize: 13,
+            fontWeight: "700",
+            marginBottom: 5,
+          }}
+        >
+          {label}
+        </Text>
+
+        <Text
+          style={{
+            color: "white",
+            fontSize: 16,
+            fontWeight: "700",
+            lineHeight: 22,
+          }}
+        >
+          {value}
+        </Text>
+      </View>
+
+      <Text
+        style={{
+          color: "#666666",
+          fontSize: 22,
+          fontWeight: "300",
+          lineHeight: 24,
+        }}
+      >
+        {">"}
+      </Text>
+    </Pressable>
   );
 }
