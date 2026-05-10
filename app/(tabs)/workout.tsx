@@ -109,12 +109,12 @@ export default function Workout() {
             borderRadius: 24,
             borderWidth: 1,
             borderColor: "rgba(0, 255, 178, 0.22)",
-            marginBottom: 26,
+            marginBottom: 30,
             shadowColor: "#00FFB2",
-            shadowOpacity: 0.08,
-            shadowRadius: 16,
+            shadowOpacity: 0.055,
+            shadowRadius: 12,
             shadowOffset: { width: 0, height: 8 },
-            elevation: 3,
+            elevation: 2,
           }}
         >
           <View
@@ -123,7 +123,7 @@ export default function Workout() {
               alignItems: "flex-start",
               justifyContent: "space-between",
               gap: 16,
-              marginBottom: 18,
+              marginBottom: 14,
             }}
           >
             <View style={{ flex: 1 }}>
@@ -190,6 +190,7 @@ export default function Workout() {
               backgroundColor: "#252525",
               borderRadius: 999,
               overflow: "hidden",
+              marginBottom: 14,
             }}
           >
             <Animated.View
@@ -200,6 +201,30 @@ export default function Workout() {
                 borderRadius: 999,
               }}
             />
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+            }}
+          >
+            {workouts.map((workout) => {
+              const isWorkoutComplete = completedWorkouts.includes(workout.day);
+
+              return (
+                <View
+                  key={workout.day}
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 2.5,
+                    backgroundColor: isWorkoutComplete ? "#19E6A1" : "#2A2A2A",
+                    opacity: isWorkoutComplete ? 0.76 : 0.62,
+                  }}
+                />
+              );
+            })}
           </View>
         </View>
 
@@ -214,24 +239,31 @@ export default function Workout() {
           Training Plan
         </Text>
 
-        {workouts.map((workout) => {
+        {workouts.map((workout, index) => {
           const isCompleted = completedWorkouts.includes(workout.day);
+          const isActiveWorkout = index === 0;
 
           return (
             <View
               key={workout.day}
               style={{
                 backgroundColor: isCompleted ? "#14201D" : "#131313",
-                padding: 22,
+                paddingHorizontal: 22,
+                paddingTop: 20,
+                paddingBottom: 17,
                 borderRadius: 24,
                 borderWidth: 1,
-                borderColor: isCompleted ? "#00FFB2" : "#242424",
+                borderColor: isCompleted
+                  ? "#00FFB2"
+                  : isActiveWorkout
+                    ? "rgba(0, 255, 178, 0.32)"
+                    : "#242424",
                 marginBottom: 22,
-                shadowColor: isCompleted ? "#00FFB2" : "#000000",
-                shadowOpacity: isCompleted ? 0.1 : 0.22,
-                shadowRadius: isCompleted ? 14 : 18,
+                shadowColor: isCompleted || isActiveWorkout ? "#00FFB2" : "#000000",
+                shadowOpacity: isCompleted ? 0.1 : isActiveWorkout ? 0.045 : 0.22,
+                shadowRadius: isCompleted ? 14 : isActiveWorkout ? 9 : 18,
                 shadowOffset: { width: 0, height: 10 },
-                elevation: isCompleted ? 4 : 3,
+                elevation: isCompleted || isActiveWorkout ? 4 : 3,
               }}
             >
               <View
@@ -240,7 +272,7 @@ export default function Workout() {
                   justifyContent: "space-between",
                   alignItems: "flex-start",
                   gap: 14,
-                  marginBottom: 18,
+                  marginBottom: 16,
                 }}
               >
                 <View style={{ flex: 1 }}>
@@ -260,32 +292,33 @@ export default function Workout() {
                   <Text
                     style={{
                       color: "white",
-                      fontSize: 23,
+                      fontSize: 22,
                       fontWeight: "800",
-                      lineHeight: 29,
+                      lineHeight: 28,
                     }}
                   >
                     {workout.title}
                   </Text>
                 </View>
 
-                {isCompleted ? (
+                {isActiveWorkout || isCompleted ? (
                   <View
                     style={{
-                      backgroundColor: "rgba(0, 255, 178, 0.12)",
+                      backgroundColor: "rgba(0, 255, 178, 0.09)",
                       borderRadius: 999,
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
+                      paddingHorizontal: 11,
+                      paddingVertical: 6,
+                      opacity: 0.9,
                     }}
                   >
                     <Text
                       style={{
                         color: "#00FFB2",
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: "800",
                       }}
                     >
-                      Done
+                      {isCompleted ? "Done" : "TODAY"}
                     </Text>
                   </View>
                 ) : null}
@@ -294,23 +327,24 @@ export default function Workout() {
               <View
                 style={{
                   borderTopWidth: 1,
-                  borderTopColor: "#242424",
+                  borderTopColor: "rgba(255, 255, 255, 0.045)",
                 }}
               >
                 {workout.exercises.map((exercise) => (
                   <View
                     key={exercise.name}
                     style={{
-                      paddingVertical: 15,
+                      paddingVertical: 10,
                       borderBottomWidth: 1,
-                      borderBottomColor: "#202020",
+                      borderBottomColor: "rgba(255, 255, 255, 0.032)",
                     }}
                   >
                     <Text
                       style={{
                         color: "white",
                         fontSize: 16,
-                        fontWeight: "700",
+                        fontWeight: "800",
+                        letterSpacing: -0.35,
                         lineHeight: 22,
                         marginBottom: 6,
                       }}
@@ -321,8 +355,9 @@ export default function Workout() {
                     <Text
                       style={{
                         color: "#8E8E8E",
-                        fontSize: 14,
+                        fontSize: 12,
                         lineHeight: 20,
+                        opacity: 0.82,
                       }}
                     >
                       {exercise.sets} sets / {exercise.reps} reps /{" "}
@@ -335,16 +370,18 @@ export default function Workout() {
               <Pressable
                 onPress={() => handleWorkoutToggle(workout.day)}
                 style={{
-                  backgroundColor: isCompleted ? "transparent" : "#00FFB2",
+                  backgroundColor: isCompleted ? "transparent" : "#19E6A1",
                   borderWidth: 1,
-                  borderColor: "#00FFB2",
-                  paddingVertical: 15,
-                  borderRadius: 18,
+                  borderColor: isCompleted ? "#00FFB2" : "#19E6A1",
+                  minHeight: 56,
+                  paddingVertical: 13,
+                  borderRadius: 16,
                   alignItems: "center",
+                  justifyContent: "center",
                   marginTop: 18,
-                  shadowColor: "#00FFB2",
-                  shadowOpacity: isCompleted ? 0 : 0.12,
-                  shadowRadius: 8,
+                  shadowColor: "#19E6A1",
+                  shadowOpacity: isCompleted ? 0 : 0.03,
+                  shadowRadius: 3,
                   shadowOffset: { width: 0, height: 4 },
                   elevation: isCompleted ? 0 : 2,
                 }}

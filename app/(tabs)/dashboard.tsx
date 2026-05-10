@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useRef } from "react";
-import { Animated, ScrollView, Text, View } from "react-native";
+import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 
-import { PrimaryButton } from "../../components/ui/PrimaryButton";
 import { useOnboardingStore } from "../../store/onboardingStore";
 import { useWorkoutStore } from "../../store/workoutStore";
 
@@ -178,8 +178,9 @@ export default function Dashboard() {
               borderRadius: 20,
               borderWidth: 1,
               borderColor: trainedToday ? "rgba(0, 255, 178, 0.45)" : "#242424",
-              padding: 18,
-              marginBottom: 16,
+              paddingHorizontal: 18,
+              paddingVertical: 24,
+              marginBottom: 12,
             }}
           >
             <View
@@ -188,7 +189,7 @@ export default function Dashboard() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 16,
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               <Text
@@ -230,16 +231,11 @@ export default function Dashboard() {
             </Text>
           </View>
 
-          <PrimaryButton
+          <DashboardActionButton
             onPress={() => router.push("/(tabs)/workout")}
-            style={{
-              shadowOpacity: 0.12,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
           >
             Start Workout
-          </PrimaryButton>
+          </DashboardActionButton>
         </PremiumCard>
 
         <PremiumCard>
@@ -249,7 +245,7 @@ export default function Dashboard() {
             <MiniTile label="Current" value={`${weight || "-"} kg`} accent />
             <MiniTile label="Target" value={`${targetWeight || "-"} kg`} />
             <MiniTile
-              label="Left"
+              label="Remaining"
               value={weightRemaining ? `${weightRemaining} kg` : "-"}
             />
           </View>
@@ -289,6 +285,69 @@ function PremiumCard({
   );
 }
 
+function DashboardActionButton({
+  children,
+  onPress,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateScale = (value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 6,
+    }).start();
+  };
+
+  const handlePress = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
+  return (
+    <Animated.View
+      style={{
+        transform: [{ scale }],
+        shadowColor: "#19E6A1",
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 2,
+      }}
+    >
+      <Pressable
+        onPress={handlePress}
+        onPressIn={() => animateScale(0.97)}
+        onPressOut={() => animateScale(1)}
+        style={{
+          backgroundColor: "#19E6A1",
+          minHeight: 57,
+          paddingVertical: 15,
+          borderRadius: 18,
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.14)",
+        }}
+      >
+        <Text
+          style={{
+            color: "#0B0B0B",
+            fontSize: 15,
+            fontWeight: "800",
+          }}
+        >
+          {children}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function ProgressRing({
   delay,
   label,
@@ -316,11 +375,11 @@ function ProgressRing({
 
   const firstHalfRotation = ringProgress.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ["-135deg", "45deg", "45deg"],
+    outputRange: ["-90deg", "90deg", "90deg"],
   });
   const secondHalfRotation = ringProgress.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ["-135deg", "-135deg", "45deg"],
+    outputRange: ["-90deg", "-90deg", "90deg"],
   });
 
   return (
@@ -509,15 +568,15 @@ function AnimatedMetricCard({
     >
       <View
         style={{
-          minHeight: 134,
+          minHeight: 124,
           backgroundColor: "#131313",
-          padding: 16,
+          padding: 14,
           borderRadius: 22,
           borderWidth: 1,
           borderColor: accent ? "rgba(0, 255, 178, 0.3)" : "#242424",
           shadowColor: accent ? "#00FFB2" : "#000000",
-          shadowOpacity: accent ? 0.08 : 0.18,
-          shadowRadius: 14,
+          shadowOpacity: accent ? 0.04 : 0.18,
+          shadowRadius: accent ? 7 : 14,
           shadowOffset: { width: 0, height: 8 },
           elevation: 2,
         }}
@@ -535,7 +594,7 @@ function AnimatedMetricCard({
         <Text
           style={{
             color: "white",
-            fontSize: 27,
+            fontSize: 26,
             fontWeight: "800",
             marginBottom: 6,
           }}
@@ -546,17 +605,17 @@ function AnimatedMetricCard({
           numberOfLines={2}
           style={{
             color: accent ? "#00FFB2" : "#8E8E8E",
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: accent ? "800" : "600",
-            lineHeight: 18,
-            minHeight: 32,
+            lineHeight: 17,
+            minHeight: 30,
           }}
         >
           {detail}
         </Text>
         <View
           style={{
-            height: 7,
+            height: 6,
             backgroundColor: "#252525",
             borderRadius: 999,
             overflow: "hidden",

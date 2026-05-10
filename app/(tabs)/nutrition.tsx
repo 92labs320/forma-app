@@ -65,6 +65,7 @@ export default function Nutrition() {
               color: "#8E8E8E",
               fontSize: 16,
               lineHeight: 22,
+              opacity: 0.9,
             }}
           >
             Simple targets that support your training plan.
@@ -96,7 +97,8 @@ export default function Nutrition() {
               borderRadius: 18,
               borderWidth: 1,
               borderColor: "#242424",
-              padding: 18,
+              paddingHorizontal: 16,
+              paddingVertical: 15,
             }}
           >
             <Text
@@ -104,7 +106,7 @@ export default function Nutrition() {
                 color: "#777777",
                 fontSize: 13,
                 fontWeight: "700",
-                marginBottom: 8,
+                marginBottom: 7,
               }}
             >
               Water
@@ -112,7 +114,7 @@ export default function Nutrition() {
             <Text
               style={{
                 color: "white",
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: "800",
               }}
             >
@@ -160,16 +162,18 @@ function Card({
     <View
       style={{
         backgroundColor: "#131313",
-        padding: 22,
-        borderRadius: 24,
+        paddingHorizontal: 18,
+        paddingTop: 18,
+        paddingBottom: 17,
+        borderRadius: 22,
         borderWidth: 1,
         borderColor: accent ? "rgba(0, 255, 178, 0.22)" : "#242424",
-        marginBottom: 22,
+        marginBottom: 18,
         shadowColor: accent ? "#00FFB2" : "#000000",
-        shadowOpacity: accent ? 0.08 : 0.22,
-        shadowRadius: accent ? 16 : 18,
+        shadowOpacity: accent ? 0.055 : 0.16,
+        shadowRadius: accent ? 11 : 14,
         shadowOffset: { width: 0, height: 10 },
-        elevation: accent ? 3 : 2,
+        elevation: accent ? 2 : 1,
       }}
     >
       {children}
@@ -185,7 +189,7 @@ function SectionHeader({
   subtitle?: string;
 }) {
   return (
-    <View style={{ marginBottom: 18 }}>
+    <View style={{ marginBottom: subtitle ? 12 : 14 }}>
       <Text
         style={{
           color: "#00FFB2",
@@ -193,7 +197,7 @@ function SectionHeader({
           fontWeight: "800",
           letterSpacing: 0.7,
           textTransform: "uppercase",
-          marginBottom: subtitle ? 7 : 0,
+          marginBottom: subtitle ? 6 : 0,
         }}
       >
         {title}
@@ -205,6 +209,7 @@ function SectionHeader({
             color: "#8E8E8E",
             fontSize: 14,
             lineHeight: 20,
+            opacity: 0.88,
           }}
         >
           {subtitle}
@@ -231,7 +236,7 @@ function TargetTile({
         borderRadius: 18,
         borderWidth: 1,
         borderColor: "#263A34",
-        padding: 18,
+        padding: 16,
       }}
     >
       <Text
@@ -284,17 +289,17 @@ function NutritionRow({
         flexDirection: "row",
         alignItems: "flex-start",
         gap: 12,
-        paddingVertical: 14,
+        paddingVertical: 11,
         borderTopWidth: index === 1 ? 0 : 1,
-        borderTopColor: "#242424",
+        borderTopColor: "rgba(255, 255, 255, 0.028)",
       }}
     >
       <View
         style={{
-          width: 24,
-          height: 24,
+          width: 22,
+          height: 22,
           borderRadius: 999,
-          backgroundColor: muted ? "#1B1B1B" : "rgba(0, 255, 178, 0.12)",
+          backgroundColor: muted ? "#1B1B1B" : "rgba(0, 255, 178, 0.09)",
           alignItems: "center",
           justifyContent: "center",
           marginTop: 1,
@@ -303,7 +308,7 @@ function NutritionRow({
         <Text
           style={{
             color: muted ? "#8E8E8E" : "#00FFB2",
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: "800",
           }}
         >
@@ -315,9 +320,10 @@ function NutritionRow({
         style={{
           flex: 1,
           color: muted ? "#B8B8B8" : "white",
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: "600",
-          lineHeight: 23,
+          lineHeight: 22,
+          opacity: muted ? 0.82 : 0.94,
         }}
       >
         {text}

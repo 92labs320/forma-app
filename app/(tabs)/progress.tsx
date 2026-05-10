@@ -2,7 +2,6 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import * as Haptics from "expo-haptics";
 
-import { PrimaryButton } from "../../components/ui/PrimaryButton";
 import { useOnboardingStore } from "../../store/onboardingStore";
 import { ProgressEntry, useProgressStore } from "../../store/progressStore";
 import {
@@ -87,12 +86,12 @@ export default function Progress() {
             subtitle="Small check-ins, clear direction."
           />
 
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
             <MetricTile label="Start" value={`${weight || "-"} kg`} />
             <MetricTile label="Current" value={`${latestWeight || "-"} kg`} accent />
           </View>
 
-          <View style={{ flexDirection: "row", gap: 12, marginBottom: 18 }}>
+          <View style={{ flexDirection: "row", gap: 10, marginBottom: 14 }}>
             <MetricTile label="Target" value={`${targetWeight || "-"} kg`} />
             <MetricTile
               label="Remaining"
@@ -106,7 +105,7 @@ export default function Progress() {
               borderRadius: 18,
               borderWidth: 1,
               borderColor: "#242424",
-              padding: 18,
+              padding: 16,
             }}
           >
             <View
@@ -177,26 +176,22 @@ export default function Progress() {
               backgroundColor: "#0B0B0B",
               color: "white",
               padding: 18,
+              paddingVertical: 16,
               borderRadius: 18,
               fontSize: 18,
               fontWeight: "700",
               borderWidth: 1,
               borderColor: canAddEntry ? "rgba(0, 255, 178, 0.55)" : "#242424",
-              marginBottom: 16,
+              marginBottom: 12,
             }}
           />
 
-          <PrimaryButton
+          <CheckInButton
             onPress={handleAddEntry}
             disabled={!canAddEntry}
-            style={{
-              shadowOpacity: canAddEntry ? 0.12 : 0,
-              shadowRadius: 8,
-              elevation: canAddEntry ? 2 : 0,
-            }}
           >
             Add Check-In
-          </PrimaryButton>
+          </CheckInButton>
         </PremiumCard>
 
         <PremiumCard>
@@ -238,16 +233,16 @@ function PremiumCard({
     <View
       style={{
         backgroundColor: "#131313",
-        padding: 22,
+        padding: 20,
         borderRadius: 24,
         borderWidth: 1,
         borderColor: accent ? "rgba(0, 255, 178, 0.22)" : "#242424",
-        marginBottom: 22,
+        marginBottom: 20,
         shadowColor: accent ? "#00FFB2" : "#000000",
-        shadowOpacity: accent ? 0.08 : 0.22,
-        shadowRadius: accent ? 16 : 18,
+        shadowOpacity: accent ? 0.045 : 0.2,
+        shadowRadius: accent ? 10 : 16,
         shadowOffset: { width: 0, height: 10 },
-        elevation: accent ? 3 : 2,
+        elevation: accent ? 2 : 2,
       }}
     >
       {children}
@@ -292,6 +287,73 @@ function SectionHeader({
   );
 }
 
+function CheckInButton({
+  children,
+  disabled,
+  onPress,
+}: {
+  children: ReactNode;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateScale = (value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 6,
+    }).start();
+  };
+
+  const handlePress = async () => {
+    if (disabled) return;
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
+  return (
+    <Animated.View
+      style={{
+        transform: [{ scale }],
+        shadowColor: "#00FFB2",
+        shadowOpacity: disabled ? 0 : 0.08,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: disabled ? 0 : 2,
+      }}
+    >
+      <Pressable
+        disabled={disabled}
+        onPress={handlePress}
+        onPressIn={() => animateScale(0.97)}
+        onPressOut={() => animateScale(1)}
+        style={{
+          minHeight: 54,
+          backgroundColor: disabled ? "#101010" : "#00FFB2",
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: disabled ? "#282828" : "rgba(255,255,255,0.16)",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: disabled ? "#666666" : "#0B0B0B",
+            fontSize: 16,
+            fontWeight: "800",
+          }}
+        >
+          {children}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function MetricTile({
   label,
   value,
@@ -306,10 +368,10 @@ function MetricTile({
       style={{
         flex: 1,
         backgroundColor: "#0B0B0B",
-        borderRadius: 18,
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: accent ? "rgba(0, 255, 178, 0.35)" : "#242424",
-        padding: 16,
+        padding: 14,
       }}
     >
       <Text
@@ -344,17 +406,17 @@ function EmptyState() {
         borderRadius: 20,
         borderWidth: 1,
         borderColor: "#242424",
-        padding: 24,
+        padding: 20,
       }}
     >
       <View
         style={{
-          width: 34,
+          width: 28,
           height: 4,
           borderRadius: 999,
           backgroundColor: "#00FFB2",
           opacity: 0.65,
-          marginBottom: 18,
+          marginBottom: 14,
         }}
       />
       <Text
@@ -362,7 +424,7 @@ function EmptyState() {
           color: "white",
           fontSize: 19,
           fontWeight: "800",
-          marginBottom: 8,
+          marginBottom: 6,
           textAlign: "center",
         }}
       >
