@@ -45,8 +45,12 @@ function calculateCurrentStreak(dates: string[]) {
 }
 
 export const useWorkoutStore = create<WorkoutState>((set, get) => ({
-  completedWorkouts: [],
-  completedWorkoutDates: [],
+  completedWorkouts: ["Day 1"],
+  completedWorkoutDates: [
+    getDateKey(new Date()),
+    getDateKey(addDays(new Date(), -1)),
+    getDateKey(addDays(new Date(), -2)),
+  ],
 
   toggleWorkout: (workoutDay) => {
     const current = get().completedWorkouts;

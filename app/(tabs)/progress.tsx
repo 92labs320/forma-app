@@ -8,9 +8,14 @@ import {
   calculateWeightRemaining,
   estimateTimeline,
 } from "../../lib/fitnessCalculator";
+import {
+  formatWeight,
+  normalizeWeightInput,
+  UnitSystem,
+} from "../../lib/unitConversions";
 
 export default function Progress() {
-  const { weight, targetWeight } = useOnboardingStore();
+  const { weight, targetWeight, unitSystem } = useOnboardingStore();
   const { entries, addEntry, removeEntry } = useProgressStore();
 
   const [newWeight, setNewWeight] = useState("");
@@ -43,7 +48,7 @@ export default function Progress() {
   const handleAddEntry = async () => {
     if (!canAddEntry) return;
 
-    addEntry(newWeight.trim());
+    addEntry(normalizeWeightInput(newWeight.trim(), unitSystem));
     setNewWeight("");
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
@@ -87,15 +92,15 @@ export default function Progress() {
           />
 
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-            <MetricTile label="Start" value={`${weight || "-"} kg`} />
-            <MetricTile label="Current" value={`${latestWeight || "-"} kg`} accent />
+            <MetricTile label="Start" value={formatWeight(weight, unitSystem)} />
+            <MetricTile label="Current" value={formatWeight(latestWeight, unitSystem)} accent />
           </View>
 
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 14 }}>
-            <MetricTile label="Target" value={`${targetWeight || "-"} kg`} />
+            <MetricTile label="Target" value={formatWeight(targetWeight, unitSystem)} />
             <MetricTile
               label="Remaining"
-              value={weightRemaining ? `${weightRemaining} kg` : "-"}
+              value={weightRemaining ? formatWeight(weightRemaining, unitSystem) : "-"}
             />
           </View>
 
@@ -170,7 +175,7 @@ export default function Progress() {
             value={newWeight}
             onChangeText={setNewWeight}
             keyboardType="numeric"
-            placeholder="Current weight in kg"
+            placeholder={`Current weight in ${unitSystem === "metric" ? "kg" : "lbs"}`}
             placeholderTextColor="#666666"
             style={{
               backgroundColor: "#0B0B0B",
@@ -212,6 +217,7 @@ export default function Progress() {
                 key={entry.id}
                 entry={entry}
                 index={index}
+                unitSystem={unitSystem}
                 onRemove={() => removeEntry(entry.id)}
               />
             ))
@@ -447,10 +453,12 @@ function EmptyState() {
 function AnimatedEntryRow({
   entry,
   index,
+  unitSystem,
   onRemove,
 }: {
   entry: ProgressEntry;
   index: number;
+  unitSystem: UnitSystem;
   onRemove: () => void;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -496,7 +504,7 @@ function AnimatedEntryRow({
 
         <View style={{ flex: 1 }}>
           <Text style={{ color: "white", fontSize: 20, fontWeight: "800" }}>
-            {entry.weight} kg
+            {formatWeight(entry.weight, unitSystem)}
           </Text>
 
           <Text

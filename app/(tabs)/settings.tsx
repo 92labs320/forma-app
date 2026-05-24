@@ -3,6 +3,7 @@ import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native"
 import { useOnboardingStore } from "../../store/onboardingStore";
 import { useProgressStore } from "../../store/progressStore";
 import { useWorkoutStore } from "../../store/workoutStore";
+import { formatWeight, UnitSystem } from "../../lib/unitConversions";
 
 const PRIVACY_POLICY_URL =
   "https://low-cyclone-19f.notion.site/FORMA-Privacy-Policy-35ce10ed0554806a8d04ef8f11fdde21?source=copy_link";
@@ -11,6 +12,8 @@ export default function Settings() {
   const goal = useOnboardingStore((state) => state.goal);
   const weight = useOnboardingStore((state) => state.weight);
   const targetWeight = useOnboardingStore((state) => state.targetWeight);
+  const unitSystem = useOnboardingStore((state) => state.unitSystem);
+  const setUnitSystem = useOnboardingStore((state) => state.setUnitSystem);
   const resetProfile = useOnboardingStore((state) => state.reset);
   const progressEntries = useProgressStore((state) => state.entries);
   const removeEntry = useProgressStore((state) => state.removeEntry);
@@ -93,13 +96,16 @@ export default function Settings() {
 
       <Card title="Profile">
         <Item label="Goal" value={goal || "-"} />
-        <Item label="Current Weight" value={weight ? `${weight} kg` : "-"} />
-        <Item label="Target Weight" value={targetWeight ? `${targetWeight} kg` : "-"} />
+        <Item label="Current Weight" value={formatWeight(weight, unitSystem)} />
+        <Item label="Target Weight" value={formatWeight(targetWeight, unitSystem)} />
       </Card>
 
       <Card title="Preferences">
         <Item label="Notifications" value="Off" />
-        <Item label="Units" value="kg / lbs" />
+        <UnitPreference
+          unitSystem={unitSystem}
+          onChange={setUnitSystem}
+        />
       </Card>
 
       <Card title="Premium">
@@ -157,6 +163,74 @@ export default function Settings() {
         <DangerButton label="Reset Progress" onPress={confirmResetProgress} />
       </Card>
     </ScrollView>
+  );
+}
+
+function UnitPreference({
+  unitSystem,
+  onChange,
+}: {
+  unitSystem: UnitSystem;
+  onChange: (unitSystem: UnitSystem) => void;
+}) {
+  return (
+    <View
+      style={{
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.032)",
+      }}
+    >
+      <Text
+        style={{
+          color: "#777777",
+          fontSize: 13,
+          fontWeight: "700",
+          marginBottom: 10,
+        }}
+      >
+        Units
+      </Text>
+
+      <View
+        style={{
+          flexDirection: "row",
+          backgroundColor: "#0B0B0B",
+          borderRadius: 999,
+          borderWidth: 1,
+          borderColor: "#242424",
+          padding: 4,
+        }}
+      >
+        {(["metric", "imperial"] as UnitSystem[]).map((item) => {
+          const isSelected = unitSystem === item;
+
+          return (
+            <Pressable
+              key={item}
+              onPress={() => onChange(item)}
+              style={{
+                flex: 1,
+                backgroundColor: isSelected ? "#00FFB2" : "transparent",
+                borderRadius: 999,
+                paddingVertical: 10,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: isSelected ? "#0B0B0B" : "#8E8E8E",
+                  fontSize: 14,
+                  fontWeight: "800",
+                }}
+              >
+                {item === "metric" ? "Metric" : "Imperial"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 

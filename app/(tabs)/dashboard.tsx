@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { useOnboardingStore } from "../../store/onboardingStore";
+import { useProgressStore } from "../../store/progressStore";
 import { useWorkoutStore } from "../../store/workoutStore";
 
 import {
@@ -13,6 +14,7 @@ import {
   getFitnessProfile,
   calculateWeightRemaining,
 } from "../../lib/fitnessCalculator";
+import { formatWeight } from "../../lib/unitConversions";
 
 function getDateKey(date: Date) {
   const year = date.getFullYear();
@@ -23,18 +25,20 @@ function getDateKey(date: Date) {
 }
 
 export default function Dashboard() {
-  const { goal, gender, age, height, weight, targetWeight } =
+  const { goal, gender, age, height, weight, targetWeight, unitSystem } =
     useOnboardingStore();
+  const progressEntries = useProgressStore((state) => state.entries);
   const { completedWorkoutDates, getCurrentStreak } = useWorkoutStore();
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const screenTranslateY = useRef(new Animated.Value(12)).current;
 
-  const bmi = calculateBMI(weight, height);
-  const calories = calculateCalories(gender, age, weight, height, goal);
-  const protein = calculateProtein(weight);
+  const currentWeight = progressEntries[0]?.weight || weight;
+  const bmi = calculateBMI(currentWeight, height);
+  const calories = calculateCalories(gender, age, currentWeight, height, goal);
+  const protein = calculateProtein(currentWeight);
   const fitnessProfile = getFitnessProfile(bmi);
-  const weightRemaining = calculateWeightRemaining(weight, targetWeight);
+  const weightRemaining = calculateWeightRemaining(currentWeight, targetWeight);
   const streak = getCurrentStreak();
   const trainedToday = completedWorkoutDates.includes(getDateKey(new Date()));
 
@@ -242,11 +246,11 @@ export default function Dashboard() {
           <SectionHeader title="Transformation" />
 
           <View style={{ flexDirection: "row", gap: 10 }}>
-            <MiniTile label="Current" value={`${weight || "-"} kg`} accent />
-            <MiniTile label="Target" value={`${targetWeight || "-"} kg`} />
+            <MiniTile label="Current" value={formatWeight(currentWeight, unitSystem)} accent />
+            <MiniTile label="Target" value={formatWeight(targetWeight, unitSystem)} />
             <MiniTile
               label="Remaining"
-              value={weightRemaining ? `${weightRemaining} kg` : "-"}
+              value={weightRemaining ? formatWeight(weightRemaining, unitSystem) : "-"}
             />
           </View>
         </PremiumCard>

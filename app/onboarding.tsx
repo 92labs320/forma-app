@@ -13,6 +13,13 @@ import {
 } from "react-native";
 
 import { useOnboardingStore } from "../store/onboardingStore";
+import {
+  cmToFeetInches,
+  feetInchesToCm,
+  formatWeightInput,
+  normalizeWeightInput,
+  UnitSystem,
+} from "../lib/unitConversions";
 
 const TOTAL_STEPS = 6;
 
@@ -39,12 +46,14 @@ export default function Onboarding() {
     height,
     weight,
     targetWeight,
+    unitSystem,
     setGoal,
     setGender,
     setAge,
     setHeight,
     setWeight,
     setTargetWeight,
+    setUnitSystem,
   } = useOnboardingStore();
 
   const progress = step / TOTAL_STEPS;
@@ -103,6 +112,21 @@ export default function Onboarding() {
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setStep(step - 1);
+  };
+
+  const handleUnitChange = async (nextUnitSystem: UnitSystem) => {
+    await Haptics.selectionAsync();
+    setUnitSystem(nextUnitSystem);
+  };
+
+  const handleFeetChange = (feet: string) => {
+    const { inches } = cmToFeetInches(height);
+    setHeight(feetInchesToCm(feet, inches));
+  };
+
+  const handleInchesChange = (inches: string) => {
+    const { feet } = cmToFeetInches(height);
+    setHeight(feetInchesToCm(feet, inches));
   };
 
   const handleSelection = async (
@@ -219,6 +243,128 @@ export default function Onboarding() {
           shadowOffset: { width: 0, height: 8 },
           elevation: 1,
         }}
+      />
+    </>
+  );
+
+  const renderUnitToggle = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        backgroundColor: "#101010",
+        borderRadius: 999,
+        borderWidth: 1,
+        borderColor: "#242424",
+        padding: 4,
+        marginBottom: 16,
+      }}
+    >
+      {(["metric", "imperial"] as UnitSystem[]).map((item) => {
+        const isSelected = unitSystem === item;
+        const label = item === "metric" ? "kg" : "lbs";
+
+        return (
+          <Pressable
+            key={item}
+            onPress={() => handleUnitChange(item)}
+            style={{
+              flex: 1,
+              backgroundColor: isSelected ? "#00FFB2" : "transparent",
+              borderRadius: 999,
+              paddingVertical: 10,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: isSelected ? "#0B0B0B" : "#8E8E8E",
+                fontSize: 14,
+                fontWeight: "800",
+              }}
+            >
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
+  const renderHeightStep = () => {
+    const imperialHeight = cmToFeetInches(height);
+
+    return (
+      <>
+        <StepHeader
+          title="How tall are you?"
+          subtitle={
+            unitSystem === "metric"
+              ? "Enter your height in centimeters."
+              : "Enter your height in feet and inches."
+          }
+        />
+
+        {renderUnitToggle()}
+
+        {unitSystem === "metric" ? (
+          <TextInput
+            value={height}
+            onChangeText={setHeight}
+            keyboardType="numeric"
+            placeholder="Height in cm"
+            placeholderTextColor="#666666"
+            selectionColor="#00FFB2"
+            style={inputStyle(height)}
+          />
+        ) : (
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TextInput
+              value={imperialHeight.feet}
+              onChangeText={handleFeetChange}
+              keyboardType="numeric"
+              placeholder="Feet"
+              placeholderTextColor="#666666"
+              selectionColor="#00FFB2"
+              style={[inputStyle(height), { flex: 1 }]}
+            />
+            <TextInput
+              value={imperialHeight.inches}
+              onChangeText={handleInchesChange}
+              keyboardType="numeric"
+              placeholder="Inches"
+              placeholderTextColor="#666666"
+              selectionColor="#00FFB2"
+              style={[inputStyle(height), { flex: 1 }]}
+            />
+          </View>
+        )}
+      </>
+    );
+  };
+
+  const renderWeightStep = (
+    title: string,
+    subtitle: string,
+    value: string,
+    setValue: (value: string) => void,
+    placeholderPrefix: string
+  ) => (
+    <>
+      <StepHeader
+        title={title}
+        subtitle={`${subtitle} Use ${unitSystem === "metric" ? "kilograms" : "pounds"}.`}
+      />
+
+      {renderUnitToggle()}
+
+      <TextInput
+        value={formatWeightInput(value, unitSystem)}
+        onChangeText={(text) => setValue(normalizeWeightInput(text, unitSystem))}
+        keyboardType="numeric"
+        placeholder={`${placeholderPrefix} in ${unitSystem === "metric" ? "kg" : "lbs"}`}
+        placeholderTextColor="#666666"
+        selectionColor="#00FFB2"
+        style={inputStyle(value)}
       />
     </>
   );
@@ -345,31 +491,24 @@ export default function Onboarding() {
                   setAge
                 )}
 
-              {step === 4 &&
-                renderInputStep(
-                  "How tall are you?",
-                  "Enter your height in centimeters.",
-                  "Height in cm",
-                  height,
-                  setHeight
-                )}
+              {step === 4 && renderHeightStep()}
 
               {step === 5 &&
-                renderInputStep(
+                renderWeightStep(
                   "What’s your weight?",
-                  "Use your current weight in kilograms.",
-                  "Weight in kg",
+                  "Use your current weight.",
                   weight,
-                  setWeight
+                  setWeight,
+                  "Weight"
                 )}
 
               {step === 6 &&
-                renderInputStep(
+                renderWeightStep(
                   "What’s your target weight?",
                   "Choose a realistic direction to work toward.",
-                  "Target weight in kg",
                   targetWeight,
-                  setTargetWeight
+                  setTargetWeight,
+                  "Target weight"
                 )}
             </View>
           </Animated.View>
@@ -414,6 +553,25 @@ export default function Onboarding() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+function inputStyle(value: string) {
+  return {
+    backgroundColor: "#131313",
+    color: "white",
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    fontSize: 24,
+    fontWeight: "800" as const,
+    borderWidth: 1,
+    borderColor: value ? "rgba(0, 255, 178, 0.5)" : "#242424",
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 1,
+  };
 }
 
 function StepHeader({

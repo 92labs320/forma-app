@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useRef } from "react";
 import { Animated, ScrollView, Text, View } from "react-native";
 
 import { useOnboardingStore } from "../../store/onboardingStore";
+import { useProgressStore } from "../../store/progressStore";
 import {
   calculateCalories,
   calculateProtein,
@@ -10,12 +11,14 @@ import { getNutritionPlan } from "../../data/nutritionPlans";
 
 export default function Nutrition() {
   const { goal, gender, age, height, weight } = useOnboardingStore();
+  const entries = useProgressStore((state) => state.entries);
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const screenTranslateY = useRef(new Animated.Value(12)).current;
 
-  const calories = calculateCalories(gender, age, weight, height, goal);
-  const protein = calculateProtein(weight);
+  const currentWeight = entries[0]?.weight || weight;
+  const calories = calculateCalories(gender, age, currentWeight, height, goal);
+  const protein = calculateProtein(currentWeight);
   const plan = getNutritionPlan(goal);
 
   useEffect(() => {

@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.djokokamdem.forma",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "supportsTablet": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {

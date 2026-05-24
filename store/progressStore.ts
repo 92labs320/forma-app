@@ -14,7 +14,15 @@ interface ProgressState {
 }
 
 export const useProgressStore = create<ProgressState>((set, get) => ({
-  entries: [],
+  entries: __DEV__
+    ? [
+        {
+          id: "starter-current-weight",
+          weight: "89",
+          date: new Date().toISOString(),
+        },
+      ]
+    : [],
 
   addEntry: (weight) => {
     const newEntry: ProgressEntry = {
