@@ -115,7 +115,6 @@ export default function Settings() {
       </Card>
 
       <Card title="Preferences">
-        <Item label="Notifications" value="Off" />
         <UnitPreference
           unitSystem={unitSystem}
           onChange={setUnitSystem}
