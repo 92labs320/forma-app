@@ -247,7 +247,7 @@ export default function Onboarding() {
     </>
   );
 
-  const renderUnitToggle = () => (
+  const renderUnitToggle = (labels: { metric: string; imperial: string }) => (
     <View
       style={{
         flexDirection: "row",
@@ -261,7 +261,7 @@ export default function Onboarding() {
     >
       {(["metric", "imperial"] as UnitSystem[]).map((item) => {
         const isSelected = unitSystem === item;
-        const label = item === "metric" ? "kg" : "lbs";
+        const label = item === "metric" ? labels.metric : labels.imperial;
 
         return (
           <Pressable
@@ -304,7 +304,7 @@ export default function Onboarding() {
           }
         />
 
-        {renderUnitToggle()}
+        {renderUnitToggle({ metric: "cm", imperial: "ft/in" })}
 
         {unitSystem === "metric" ? (
           <TextInput
@@ -355,7 +355,7 @@ export default function Onboarding() {
         subtitle={`${subtitle} Use ${unitSystem === "metric" ? "kilograms" : "pounds"}.`}
       />
 
-      {renderUnitToggle()}
+      {renderUnitToggle({ metric: "kg", imperial: "lbs" })}
 
       <TextInput
         value={formatWeightInput(value, unitSystem)}

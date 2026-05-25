@@ -1,4 +1,5 @@
 import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
 
 import { useOnboardingStore } from "../../store/onboardingStore";
 import { useProgressStore } from "../../store/progressStore";
@@ -28,13 +29,18 @@ export default function Settings() {
     completedWorkouts.forEach((workoutDay) => toggleWorkout(workoutDay));
   };
 
+  const handleResetProfile = () => {
+    resetProfile();
+    router.replace("/onboarding");
+  };
+
   const confirmResetProfile = () => {
     Alert.alert(
       "Reset Profile",
       "This will clear your onboarding profile.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Reset", style: "destructive", onPress: resetProfile },
+        { text: "Reset", style: "destructive", onPress: handleResetProfile },
       ]
     );
   };
@@ -57,15 +63,23 @@ export default function Settings() {
     );
   };
 
-  const showFormaProInfo = () => {
-    Alert.alert(
-      "FORMA Pro",
-      "Premium features are not available yet."
-    );
-  };
+  const openPrivacyPolicy = async () => {
+    try {
+      const canOpen = await Linking.canOpenURL(PRIVACY_POLICY_URL);
 
-  const openPrivacyPolicy = () => {
-    Linking.openURL(PRIVACY_POLICY_URL);
+      if (!canOpen) {
+        Alert.alert(
+          "Unable to open Privacy Policy. Please try again later."
+        );
+        return;
+      }
+
+      await Linking.openURL(PRIVACY_POLICY_URL);
+    } catch {
+      Alert.alert(
+        "Unable to open Privacy Policy. Please try again later."
+      );
+    }
   };
 
   return (
@@ -108,46 +122,6 @@ export default function Settings() {
         />
       </Card>
 
-      <Card title="Premium">
-        <Pressable
-          onPress={showFormaProInfo}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 14,
-          }}
-        >
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: "white",
-                fontSize: 18,
-                fontWeight: "800",
-                marginBottom: 6,
-              }}
-            >
-              FORMA Pro
-            </Text>
-
-            <Text style={{ color: "#8E8E8E", fontSize: 14, lineHeight: 20 }}>
-              Advanced insights and personalized tools for long-term consistency.
-            </Text>
-          </View>
-
-          <Text
-            style={{
-              color: "#666666",
-              fontSize: 26,
-              fontWeight: "300",
-              lineHeight: 28,
-            }}
-          >
-            ›
-          </Text>
-        </Pressable>
-      </Card>
-
       <Card title="App">
         <Item label="Version" value="1.0" />
         <InteractiveItem
@@ -155,7 +129,7 @@ export default function Settings() {
           value="View policy"
           onPress={openPrivacyPolicy}
         />
-        <Item label="Contact Support" value="support@forma.app" />
+        <Item label="Contact Support" value="92labs320@gmail.com" />
       </Card>
 
       <Card title="Danger Zone">
