@@ -9,12 +9,20 @@ import {
 } from "react-native";
 
 import { PrimaryButton } from "../components/ui/PrimaryButton";
+import { useOnboardingStore } from "../store/onboardingStore";
 
 export default function Index() {
   const entranceOpacity = useRef(new Animated.Value(0)).current;
   const entranceTranslateY = useRef(new Animated.Value(10)).current;
 
+  const hasHydrated = useOnboardingStore((state) => state.hasHydrated);
+  const onboardingCompleted = useOnboardingStore(
+    (state) => state.onboardingCompleted
+  );
+
   useEffect(() => {
+    if (!hasHydrated || onboardingCompleted) return;
+
     Animated.parallel([
       Animated.timing(entranceOpacity, {
         toValue: 1,
@@ -27,7 +35,13 @@ export default function Index() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [entranceOpacity, entranceTranslateY]);
+  }, [hasHydrated, onboardingCompleted, entranceOpacity, entranceTranslateY]);
+
+  // Show blank screen while store hydrates or while _layout.tsx guard is
+  // processing a redirect to dashboard (prevents a flash of the welcome screen).
+  if (!hasHydrated || onboardingCompleted) {
+    return <View style={{ flex: 1, backgroundColor: "#0B0B0B" }} />;
+  }
 
   return (
     <View

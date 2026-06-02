@@ -5,7 +5,14 @@ import { getDefaultUnitSystem, UnitSystem } from "../lib/unitConversions";
 
 type OnboardingFields = Pick<
   OnboardingState,
-  "goal" | "gender" | "age" | "height" | "weight" | "targetWeight" | "unitSystem"
+  | "goal"
+  | "gender"
+  | "age"
+  | "height"
+  | "weight"
+  | "targetWeight"
+  | "unitSystem"
+  | "onboardingCompleted"
 >;
 
 const emptyText = (value: unknown) =>
@@ -22,6 +29,7 @@ const initialOnboardingState: OnboardingFields = {
   weight: "",
   targetWeight: "",
   unitSystem: getDefaultUnitSystem(),
+  onboardingCompleted: false,
 };
 
 interface OnboardingState {
@@ -32,6 +40,8 @@ interface OnboardingState {
   weight: string;
   targetWeight: string;
   unitSystem: UnitSystem;
+  onboardingCompleted: boolean;
+  hasHydrated: boolean;
 
   setGoal: (goal: string) => void;
   setGender: (gender: string) => void;
@@ -40,6 +50,7 @@ interface OnboardingState {
   setWeight: (weight: string) => void;
   setTargetWeight: (targetWeight: string) => void;
   setUnitSystem: (unitSystem: UnitSystem) => void;
+  setOnboardingCompleted: (value: boolean) => Promise<void>;
 
   reset: () => void;
 }
@@ -73,6 +84,10 @@ function sanitizeOnboardingFields(
     unitSystem: isUnitSystem(state?.unitSystem)
       ? state.unitSystem
       : getDefaultUnitSystem(),
+    onboardingCompleted:
+      typeof state?.onboardingCompleted === "boolean"
+        ? state.onboardingCompleted
+        : false,
   };
 }
 
@@ -80,6 +95,7 @@ export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
       ...initialOnboardingState,
+      hasHydrated: false,
 
       setGoal: (goal) => set({ goal: emptyText(goal) }),
       setGender: (gender) => set({ gender: emptyText(gender) }),
@@ -94,6 +110,13 @@ export const useOnboardingStore = create<OnboardingState>()(
             ? unitSystem
             : getDefaultUnitSystem(),
         }),
+      setOnboardingCompleted: async (value) => {
+        await Promise.resolve(
+          set({
+            onboardingCompleted: typeof value === "boolean" ? value : false,
+          }) as unknown as Promise<void>
+        );
+      },
 
       reset: () =>
         set({
@@ -104,6 +127,7 @@ export const useOnboardingStore = create<OnboardingState>()(
           weight: "",
           targetWeight: "",
           unitSystem: getDefaultUnitSystem(),
+          onboardingCompleted: false,
         }),
     }),
     {
@@ -117,6 +141,9 @@ export const useOnboardingStore = create<OnboardingState>()(
             (persistedState as Partial<OnboardingFields>)
         ),
       }),
+      onRehydrateStorage: () => (state) => {
+        useOnboardingStore.setState({ hasHydrated: true });
+      },
     }
   )
 );

@@ -54,6 +54,7 @@ export default function Onboarding() {
     setWeight,
     setTargetWeight,
     setUnitSystem,
+    setOnboardingCompleted,
   } = useOnboardingStore();
 
   const progress = step / TOTAL_STEPS;
@@ -104,7 +105,8 @@ export default function Onboarding() {
       return;
     }
 
-    router.push("/(tabs)/dashboard");
+    await setOnboardingCompleted(true);
+    router.replace("/(tabs)/dashboard");
   };
 
   const goBack = async () => {
