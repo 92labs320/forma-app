@@ -105,7 +105,8 @@ export default function Onboarding() {
       return;
     }
 
-    await setOnboardingCompleted(true);
+    setOnboardingCompleted(true);
+    await new Promise((resolve) => setTimeout(resolve, 300));
     router.replace("/(tabs)/dashboard");
   };
 

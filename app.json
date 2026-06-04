@@ -2,7 +2,7 @@
   "expo": {
     "name": "FORMA",
     "slug": "forma",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "forma",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.djokokamdem.forma",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "supportsTablet": false,
       "userInterfaceStyle": "dark",
       "infoPlist": {

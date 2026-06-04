@@ -50,7 +50,7 @@ interface OnboardingState {
   setWeight: (weight: string) => void;
   setTargetWeight: (targetWeight: string) => void;
   setUnitSystem: (unitSystem: UnitSystem) => void;
-  setOnboardingCompleted: (value: boolean) => Promise<void>;
+  setOnboardingCompleted: (value: boolean) => void;
 
   reset: () => void;
 }
@@ -110,13 +110,10 @@ export const useOnboardingStore = create<OnboardingState>()(
             ? unitSystem
             : getDefaultUnitSystem(),
         }),
-      setOnboardingCompleted: async (value) => {
-        await Promise.resolve(
-          set({
-            onboardingCompleted: typeof value === "boolean" ? value : false,
-          }) as unknown as Promise<void>
-        );
-      },
+      setOnboardingCompleted: (value) =>
+        set({
+          onboardingCompleted: typeof value === "boolean" ? value : false,
+        }),
 
       reset: () =>
         set({
@@ -141,8 +138,12 @@ export const useOnboardingStore = create<OnboardingState>()(
             (persistedState as Partial<OnboardingFields>)
         ),
       }),
-      onRehydrateStorage: () => (state) => {
-        useOnboardingStore.setState({ hasHydrated: true });
+      onRehydrateStorage: () => () => {
+        try {
+          useOnboardingStore.setState({ hasHydrated: true });
+        } catch {
+          // Hydration must never crash app startup.
+        }
       },
     }
   )
