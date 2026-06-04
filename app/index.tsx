@@ -21,6 +21,12 @@ export default function Index() {
   );
 
   useEffect(() => {
+    if (hasHydrated && onboardingCompleted) {
+      router.replace("/(tabs)/dashboard");
+    }
+  }, [hasHydrated, onboardingCompleted]);
+
+  useEffect(() => {
     if (!hasHydrated || onboardingCompleted) return;
 
     Animated.parallel([
@@ -37,8 +43,7 @@ export default function Index() {
     ]).start();
   }, [hasHydrated, onboardingCompleted, entranceOpacity, entranceTranslateY]);
 
-  // Show blank screen while store hydrates or while _layout.tsx guard is
-  // processing a redirect to dashboard (prevents a flash of the welcome screen).
+  // Prevent a flash of the welcome screen during hydration or dashboard routing.
   if (!hasHydrated || onboardingCompleted) {
     return <View style={{ flex: 1, backgroundColor: "#0B0B0B" }} />;
   }

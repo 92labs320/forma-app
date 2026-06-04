@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { PersistStorage, StorageValue, persist } from "zustand/middleware";
 import { getDefaultUnitSystem, UnitSystem } from "../lib/unitConversions";
 
 type OnboardingFields = Pick<
@@ -55,24 +55,8 @@ interface OnboardingState {
   reset: () => void;
 }
 
-const safeOnboardingStorage = {
-  getItem: (name: string) =>
-    AsyncStorage.getItem(name).catch(() => {
-      return null;
-    }),
-  setItem: (name: string, value: string) => {
-    if (typeof value !== "string") {
-      return AsyncStorage.removeItem(name).catch(() => undefined);
-    }
-
-    return AsyncStorage.setItem(name, value).catch(() => undefined);
-  },
-  removeItem: (name: string) =>
-    AsyncStorage.removeItem(name).catch(() => undefined),
-};
-
 function sanitizeOnboardingFields(
-  state: Partial<OnboardingFields> | undefined
+  state: Partial<OnboardingFields> | null | undefined
 ): OnboardingFields {
   return {
     goal: emptyText(state?.goal) || initialOnboardingState.goal,
@@ -90,6 +74,68 @@ function sanitizeOnboardingFields(
         : false,
   };
 }
+
+const cleanPersistedState = (): StorageValue<OnboardingFields> => ({
+  state: { ...initialOnboardingState },
+});
+
+const safeOnboardingStorage: PersistStorage<OnboardingFields> = {
+  getItem: async (name) => {
+    try {
+      const value = await AsyncStorage.getItem(name);
+
+      if (typeof value !== "string") {
+        return null;
+      }
+
+      try {
+        const parsed: unknown = JSON.parse(value);
+
+        if (
+          !parsed ||
+          typeof parsed !== "object" ||
+          !("state" in parsed) ||
+          !parsed.state ||
+          typeof parsed.state !== "object"
+        ) {
+          return cleanPersistedState();
+        }
+
+        return {
+          state: sanitizeOnboardingFields(
+            parsed.state as Partial<OnboardingFields>
+          ),
+          version:
+            "version" in parsed && typeof parsed.version === "number"
+              ? parsed.version
+              : undefined,
+        };
+      } catch {
+        return cleanPersistedState();
+      }
+    } catch {
+      return cleanPersistedState();
+    }
+  },
+  setItem: async (name, value) => {
+    try {
+      const serialized = JSON.stringify({
+        ...value,
+        state: sanitizeOnboardingFields(value?.state),
+      });
+      await AsyncStorage.setItem(name, serialized);
+    } catch {
+      // Persistence failures must never affect app usage or launch.
+    }
+  },
+  removeItem: async (name) => {
+    try {
+      await AsyncStorage.removeItem(name);
+    } catch {
+      // Persistence failures must never affect app usage or launch.
+    }
+  },
+};
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
@@ -128,16 +174,24 @@ export const useOnboardingStore = create<OnboardingState>()(
         }),
     }),
     {
-      name: "forma-onboarding",
-      storage: createJSONStorage(() => safeOnboardingStorage),
+      name: "forma-onboarding-v2",
+      storage: safeOnboardingStorage,
       partialize: (state) => sanitizeOnboardingFields(state),
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...sanitizeOnboardingFields(
-          (persistedState as { state?: Partial<OnboardingFields> })?.state ??
-            (persistedState as Partial<OnboardingFields>)
-        ),
-      }),
+      merge: (persistedState, currentState) => {
+        try {
+          return {
+            ...currentState,
+            ...sanitizeOnboardingFields(
+              persistedState as Partial<OnboardingFields>
+            ),
+          };
+        } catch {
+          return {
+            ...currentState,
+            ...initialOnboardingState,
+          };
+        }
+      },
       onRehydrateStorage: () => () => {
         try {
           useOnboardingStore.setState({ hasHydrated: true });
