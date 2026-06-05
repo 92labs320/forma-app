@@ -1,24 +1,34 @@
-export function calculateBMI(weightKg: string, heightCm: string) {
-  const weight = Number(weightKg);
-  const height = Number(heightCm) / 100;
+function toFinitePositiveNumber(value: unknown) {
+  const numericValue =
+    typeof value === "string" && value.trim() === "" ? NaN : Number(value);
 
-  if (!weight || !height) return null;
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue
+    : null;
+}
 
+export function calculateBMI(weightKg: unknown, heightCm: unknown) {
+  const weight = toFinitePositiveNumber(weightKg);
+  const heightCmValue = toFinitePositiveNumber(heightCm);
+
+  if (weight === null || heightCmValue === null) return null;
+
+  const height = heightCmValue / 100;
   return Number((weight / (height * height)).toFixed(1));
 }
 
 export function calculateCalories(
   gender: string,
-  age: string,
-  weightKg: string,
-  heightCm: string,
+  age: unknown,
+  weightKg: unknown,
+  heightCm: unknown,
   goal: string
 ) {
-  const ageNumber = Number(age);
-  const weight = Number(weightKg);
-  const height = Number(heightCm);
+  const ageNumber = toFinitePositiveNumber(age);
+  const weight = toFinitePositiveNumber(weightKg);
+  const height = toFinitePositiveNumber(heightCm);
 
-  if (!ageNumber || !weight || !height) return null;
+  if (ageNumber === null || weight === null || height === null) return null;
 
   let bmr = 0;
 
@@ -37,10 +47,10 @@ export function calculateCalories(
   return Math.round(calories);
 }
 
-export function calculateProtein(weightKg: string) {
-  const weight = Number(weightKg);
+export function calculateProtein(weightKg: unknown) {
+  const weight = toFinitePositiveNumber(weightKg);
 
-  if (!weight) return null;
+  if (weight === null) return null;
 
   return Math.round(weight * 1.8);
 }
@@ -56,20 +66,20 @@ export function getFitnessProfile(bmi: number | null) {
 }
 
 export function calculateWeightRemaining(
-  currentWeight: string,
-  targetWeight: string
+  currentWeight: unknown,
+  targetWeight: unknown
 ) {
-  const current = Number(currentWeight);
-  const target = Number(targetWeight);
+  const current = toFinitePositiveNumber(currentWeight);
+  const target = toFinitePositiveNumber(targetWeight);
 
-  if (!current || !target) return null;
+  if (current === null || target === null) return null;
 
   return Math.abs(current - target).toFixed(1);
 }
 
 export function estimateTimeline(
-  currentWeight: string,
-  targetWeight: string
+  currentWeight: unknown,
+  targetWeight: unknown
 ) {
   const remaining = calculateWeightRemaining(
     currentWeight,
@@ -78,7 +88,11 @@ export function estimateTimeline(
 
   if (!remaining) return null;
 
-  const weeks = Math.ceil(Number(remaining) / 0.5);
+  const remainingValue = toFinitePositiveNumber(remaining);
+
+  if (remainingValue === null) return null;
+
+  const weeks = Math.ceil(remainingValue / 0.5);
 
   return `${weeks} weeks`;
 }

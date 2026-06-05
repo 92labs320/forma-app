@@ -1,8 +1,14 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
-import { useOnboardingStore } from "../../store/onboardingStore";
+import {
+  getSanitizedProfile,
+  isProfileComplete,
+  toSafeProfileNumber,
+  useOnboardingStore,
+} from "../../store/onboardingStore";
 import { ProgressEntry, useProgressStore } from "../../store/progressStore";
 import {
   calculateWeightRemaining,
@@ -15,7 +21,8 @@ import {
 } from "../../lib/unitConversions";
 
 export default function Progress() {
-  const { weight, targetWeight, unitSystem } = useOnboardingStore();
+  const onboardingProfile = useOnboardingStore();
+  const hasHydrated = useOnboardingStore((state) => state.hasHydrated);
   const { entries, addEntry, removeEntry } = useProgressStore();
 
   const [newWeight, setNewWeight] = useState("");
@@ -23,14 +30,21 @@ export default function Progress() {
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const screenTranslateY = useRef(new Animated.Value(12)).current;
 
-  const latestWeight = entries[0]?.weight || weight;
-  const weightRemaining = calculateWeightRemaining(latestWeight, targetWeight);
-  const timeline = estimateTimeline(latestWeight, targetWeight);
-  const parsedWeight = Number(newWeight);
-  const canAddEntry = Boolean(newWeight.trim()) && parsedWeight > 0;
+  const profile = getSanitizedProfile(onboardingProfile);
+  const profileComplete = isProfileComplete(profile);
+  const parsedWeight = toSafeProfileNumber(newWeight);
+  const canAddEntry = parsedWeight !== null;
   const checkInCount = entries.length;
 
   useEffect(() => {
+    if (hasHydrated && !profileComplete) {
+      router.replace("/onboarding");
+    }
+  }, [hasHydrated, profileComplete]);
+
+  useEffect(() => {
+    if (!hasHydrated || !profileComplete) return;
+
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 1,
@@ -43,15 +57,27 @@ export default function Progress() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [screenOpacity, screenTranslateY]);
+  }, [hasHydrated, profileComplete, screenOpacity, screenTranslateY]);
 
   const handleAddEntry = async () => {
     if (!canAddEntry) return;
 
-    addEntry(normalizeWeightInput(newWeight.trim(), unitSystem));
+    addEntry(normalizeWeightInput(newWeight.trim(), profile.unitSystem));
     setNewWeight("");
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
+
+  if (!hasHydrated || !profileComplete) {
+    return <View style={{ flex: 1, backgroundColor: "#0B0B0B" }} />;
+  }
+
+  const latestWeight =
+    toSafeProfileNumber(entries[0]?.weight) ?? profile.weight;
+  const weightRemaining = calculateWeightRemaining(
+    latestWeight,
+    profile.targetWeight
+  );
+  const timeline = estimateTimeline(latestWeight, profile.targetWeight);
 
   return (
     <ScrollView
@@ -92,15 +118,15 @@ export default function Progress() {
           />
 
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-            <MetricTile label="Start" value={formatWeight(weight, unitSystem)} />
-            <MetricTile label="Current" value={formatWeight(latestWeight, unitSystem)} accent />
+            <MetricTile label="Start" value={formatWeight(profile.weight, profile.unitSystem)} />
+            <MetricTile label="Current" value={formatWeight(latestWeight, profile.unitSystem)} accent />
           </View>
 
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 14 }}>
-            <MetricTile label="Target" value={formatWeight(targetWeight, unitSystem)} />
+            <MetricTile label="Target" value={formatWeight(profile.targetWeight, profile.unitSystem)} />
             <MetricTile
               label="Remaining"
-              value={weightRemaining ? formatWeight(weightRemaining, unitSystem) : "-"}
+              value={weightRemaining ? formatWeight(weightRemaining, profile.unitSystem) : "-"}
             />
           </View>
 
@@ -175,7 +201,7 @@ export default function Progress() {
             value={newWeight}
             onChangeText={setNewWeight}
             keyboardType="numeric"
-            placeholder={`Current weight in ${unitSystem === "metric" ? "kg" : "lbs"}`}
+            placeholder={`Current weight in ${profile.unitSystem === "metric" ? "kg" : "lbs"}`}
             placeholderTextColor="#666666"
             style={{
               backgroundColor: "#0B0B0B",
@@ -217,7 +243,7 @@ export default function Progress() {
                 key={entry.id}
                 entry={entry}
                 index={index}
-                unitSystem={unitSystem}
+                unitSystem={profile.unitSystem}
                 onRemove={() => removeEntry(entry.id)}
               />
             ))

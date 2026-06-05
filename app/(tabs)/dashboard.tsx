@@ -3,7 +3,12 @@ import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
-import { useOnboardingStore } from "../../store/onboardingStore";
+import {
+  getSanitizedProfile,
+  isProfileComplete,
+  toSafeProfileNumber,
+  useOnboardingStore,
+} from "../../store/onboardingStore";
 import { useProgressStore } from "../../store/progressStore";
 import { useWorkoutStore } from "../../store/workoutStore";
 
@@ -25,24 +30,26 @@ function getDateKey(date: Date) {
 }
 
 export default function Dashboard() {
-  const { goal, gender, age, height, weight, targetWeight, unitSystem } =
-    useOnboardingStore();
+  const onboardingProfile = useOnboardingStore();
+  const hasHydrated = useOnboardingStore((state) => state.hasHydrated);
   const progressEntries = useProgressStore((state) => state.entries);
   const { completedWorkoutDates, getCurrentStreak } = useWorkoutStore();
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const screenTranslateY = useRef(new Animated.Value(12)).current;
 
-  const currentWeight = progressEntries[0]?.weight || weight;
-  const bmi = calculateBMI(currentWeight, height);
-  const calories = calculateCalories(gender, age, currentWeight, height, goal);
-  const protein = calculateProtein(currentWeight);
-  const fitnessProfile = getFitnessProfile(bmi);
-  const weightRemaining = calculateWeightRemaining(currentWeight, targetWeight);
-  const streak = getCurrentStreak();
-  const trainedToday = completedWorkoutDates.includes(getDateKey(new Date()));
+  const profile = getSanitizedProfile(onboardingProfile);
+  const profileComplete = isProfileComplete(profile);
 
   useEffect(() => {
+    if (hasHydrated && !profileComplete) {
+      router.replace("/onboarding");
+    }
+  }, [hasHydrated, profileComplete]);
+
+  useEffect(() => {
+    if (!hasHydrated || !profileComplete) return;
+
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 1,
@@ -55,7 +62,30 @@ export default function Dashboard() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [screenOpacity, screenTranslateY]);
+  }, [hasHydrated, profileComplete, screenOpacity, screenTranslateY]);
+
+  if (!hasHydrated || !profileComplete) {
+    return <View style={{ flex: 1, backgroundColor: "#0B0B0B" }} />;
+  }
+
+  const currentWeight =
+    toSafeProfileNumber(progressEntries[0]?.weight) ?? profile.weight;
+  const bmi = calculateBMI(currentWeight, profile.height);
+  const calories = calculateCalories(
+    profile.gender,
+    profile.age,
+    currentWeight,
+    profile.height,
+    profile.goal
+  );
+  const protein = calculateProtein(currentWeight);
+  const fitnessProfile = getFitnessProfile(bmi);
+  const weightRemaining = calculateWeightRemaining(
+    currentWeight,
+    profile.targetWeight
+  );
+  const streak = getCurrentStreak();
+  const trainedToday = completedWorkoutDates.includes(getDateKey(new Date()));
 
   return (
     <ScrollView
@@ -246,11 +276,11 @@ export default function Dashboard() {
           <SectionHeader title="Transformation" />
 
           <View style={{ flexDirection: "row", gap: 10 }}>
-            <MiniTile label="Current" value={formatWeight(currentWeight, unitSystem)} accent />
-            <MiniTile label="Target" value={formatWeight(targetWeight, unitSystem)} />
+            <MiniTile label="Current" value={formatWeight(currentWeight, profile.unitSystem)} accent />
+            <MiniTile label="Target" value={formatWeight(profile.targetWeight, profile.unitSystem)} />
             <MiniTile
               label="Remaining"
-              value={weightRemaining ? formatWeight(weightRemaining, unitSystem) : "-"}
+              value={weightRemaining ? formatWeight(weightRemaining, profile.unitSystem) : "-"}
             />
           </View>
         </PremiumCard>

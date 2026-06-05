@@ -15,11 +15,37 @@ type OnboardingFields = Pick<
   | "onboardingCompleted"
 >;
 
+export type SanitizedProfile = {
+  goal: string;
+  gender: string;
+  age: number | null;
+  height: number | null;
+  weight: number | null;
+  targetWeight: number | null;
+  unitSystem: UnitSystem;
+  onboardingCompleted: boolean;
+};
+
 const emptyText = (value: unknown) =>
   typeof value === "string" ? value : "";
 
 const isUnitSystem = (value: unknown): value is UnitSystem =>
   value === "metric" || value === "imperial";
+
+export const toSafeProfileNumber = (value: unknown): number | null => {
+  const numericValue =
+    typeof value === "string" && value.trim() === "" ? NaN : Number(value);
+
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue
+    : null;
+};
+
+const safeNumberText = (value: unknown) => {
+  const numericValue = toSafeProfileNumber(value);
+
+  return numericValue === null ? "" : String(numericValue);
+};
 
 const initialOnboardingState: OnboardingFields = {
   goal: "Lose Fat",
@@ -58,13 +84,13 @@ interface OnboardingState {
 function sanitizeOnboardingFields(
   state: Partial<OnboardingFields> | null | undefined
 ): OnboardingFields {
-  return {
+  const sanitized = {
     goal: emptyText(state?.goal) || initialOnboardingState.goal,
     gender: emptyText(state?.gender) || initialOnboardingState.gender,
-    age: emptyText(state?.age),
-    height: emptyText(state?.height),
-    weight: emptyText(state?.weight),
-    targetWeight: emptyText(state?.targetWeight),
+    age: safeNumberText(state?.age),
+    height: safeNumberText(state?.height),
+    weight: safeNumberText(state?.weight),
+    targetWeight: safeNumberText(state?.targetWeight),
     unitSystem: isUnitSystem(state?.unitSystem)
       ? state.unitSystem
       : getDefaultUnitSystem(),
@@ -73,6 +99,58 @@ function sanitizeOnboardingFields(
         ? state.onboardingCompleted
         : false,
   };
+
+  return {
+    ...sanitized,
+    onboardingCompleted:
+      sanitized.onboardingCompleted && isProfileComplete(sanitized),
+  };
+}
+
+export function getSanitizedProfile(
+  profile: Partial<OnboardingFields> | null | undefined
+): SanitizedProfile {
+  const unitSystem = isUnitSystem(profile?.unitSystem)
+    ? profile.unitSystem
+    : getDefaultUnitSystem();
+
+  const sanitizedProfile = {
+    goal: emptyText(profile?.goal) || initialOnboardingState.goal,
+    gender: emptyText(profile?.gender) || initialOnboardingState.gender,
+    age: toSafeProfileNumber(profile?.age),
+    height: toSafeProfileNumber(profile?.height),
+    weight: toSafeProfileNumber(profile?.weight),
+    targetWeight: toSafeProfileNumber(profile?.targetWeight),
+    unitSystem,
+    onboardingCompleted:
+      typeof profile?.onboardingCompleted === "boolean"
+        ? profile.onboardingCompleted
+        : false,
+  };
+
+  return {
+    ...sanitizedProfile,
+    onboardingCompleted:
+      sanitizedProfile.onboardingCompleted &&
+      isProfileComplete(sanitizedProfile),
+  };
+}
+
+export function isProfileComplete(
+  profile: Partial<OnboardingFields> | Partial<SanitizedProfile> | null | undefined
+) {
+  const age = toSafeProfileNumber(profile?.age);
+  const height = toSafeProfileNumber(profile?.height);
+  const weight = toSafeProfileNumber(profile?.weight);
+  const targetWeight = toSafeProfileNumber(profile?.targetWeight);
+
+  return Boolean(
+    age !== null &&
+      height !== null &&
+      weight !== null &&
+      targetWeight !== null &&
+      isUnitSystem(profile?.unitSystem)
+  );
 }
 
 const cleanPersistedState = (): StorageValue<OnboardingFields> => ({

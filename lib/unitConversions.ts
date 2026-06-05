@@ -1,5 +1,14 @@
 export type UnitSystem = "metric" | "imperial";
 
+function toFinitePositiveNumber(value: unknown) {
+  const numericValue =
+    typeof value === "string" && value.trim() === "" ? NaN : Number(value);
+
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue
+    : null;
+}
+
 export function getDefaultUnitSystem(): UnitSystem {
   const locale =
     Intl.DateTimeFormat().resolvedOptions().locale ||
@@ -8,23 +17,23 @@ export function getDefaultUnitSystem(): UnitSystem {
   return locale.toUpperCase().includes("-US") ? "imperial" : "metric";
 }
 
-export function kgToLbs(kg: string | number) {
-  const value = Number(kg);
-  if (!value) return "";
+export function kgToLbs(kg: unknown) {
+  const value = toFinitePositiveNumber(kg);
+  if (value === null) return "";
 
   return (value * 2.20462).toFixed(0);
 }
 
-export function lbsToKg(lbs: string | number) {
-  const value = Number(lbs);
-  if (!value) return "";
+export function lbsToKg(lbs: unknown) {
+  const value = toFinitePositiveNumber(lbs);
+  if (value === null) return "";
 
   return (value / 2.20462).toFixed(1);
 }
 
-export function cmToFeetInches(cm: string | number) {
-  const value = Number(cm);
-  if (!value) return { feet: "", inches: "" };
+export function cmToFeetInches(cm: unknown) {
+  const value = toFinitePositiveNumber(cm);
+  if (value === null) return { feet: "", inches: "" };
 
   const totalInches = Math.round(value / 2.54);
   const feet = Math.floor(totalInches / 12);
@@ -34,8 +43,8 @@ export function cmToFeetInches(cm: string | number) {
 }
 
 export function feetInchesToCm(feet: string | number, inches: string | number) {
-  const feetValue = Number(feet);
-  const inchesValue = Number(inches);
+  const feetValue = toFinitePositiveNumber(feet) ?? 0;
+  const inchesValue = toFinitePositiveNumber(inches) ?? 0;
 
   if (!feetValue && !inchesValue) return "";
 
@@ -43,26 +52,28 @@ export function feetInchesToCm(feet: string | number, inches: string | number) {
 }
 
 export function formatWeight(
-  weightKg: string,
+  weightKg: unknown,
   unitSystem: UnitSystem,
   includeSecondary = false
 ) {
-  if (!weightKg) return "-";
+  const value = toFinitePositiveNumber(weightKg);
+  if (value === null) return "-";
 
   if (unitSystem === "imperial") {
-    return `${kgToLbs(weightKg)} lbs`;
+    return `${kgToLbs(value)} lbs`;
   }
 
-  const kg = Number(weightKg).toFixed(1).replace(/\.0$/, "");
-  return includeSecondary ? `${kg} kg (${kgToLbs(weightKg)} lbs)` : `${kg} kg`;
+  const kg = value.toFixed(1).replace(/\.0$/, "");
+  return includeSecondary ? `${kg} kg (${kgToLbs(value)} lbs)` : `${kg} kg`;
 }
 
-export function formatWeightInput(weightKg: string, unitSystem: UnitSystem) {
-  if (!weightKg) return "";
+export function formatWeightInput(weightKg: unknown, unitSystem: UnitSystem) {
+  const value = toFinitePositiveNumber(weightKg);
+  if (value === null) return "";
 
   return unitSystem === "imperial"
-    ? kgToLbs(weightKg)
-    : Number(weightKg).toFixed(1).replace(/\.0$/, "");
+    ? kgToLbs(value)
+    : value.toFixed(1).replace(/\.0$/, "");
 }
 
 export function normalizeWeightInput(

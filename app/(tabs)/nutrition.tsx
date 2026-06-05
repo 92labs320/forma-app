@@ -1,7 +1,13 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { Animated, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
 
-import { useOnboardingStore } from "../../store/onboardingStore";
+import {
+  getSanitizedProfile,
+  isProfileComplete,
+  toSafeProfileNumber,
+  useOnboardingStore,
+} from "../../store/onboardingStore";
 import { useProgressStore } from "../../store/progressStore";
 import {
   calculateCalories,
@@ -10,18 +16,25 @@ import {
 import { getNutritionPlan } from "../../data/nutritionPlans";
 
 export default function Nutrition() {
-  const { goal, gender, age, height, weight } = useOnboardingStore();
+  const onboardingProfile = useOnboardingStore();
+  const hasHydrated = useOnboardingStore((state) => state.hasHydrated);
   const entries = useProgressStore((state) => state.entries);
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const screenTranslateY = useRef(new Animated.Value(12)).current;
 
-  const currentWeight = entries[0]?.weight || weight;
-  const calories = calculateCalories(gender, age, currentWeight, height, goal);
-  const protein = calculateProtein(currentWeight);
-  const plan = getNutritionPlan(goal);
+  const profile = getSanitizedProfile(onboardingProfile);
+  const profileComplete = isProfileComplete(profile);
 
   useEffect(() => {
+    if (hasHydrated && !profileComplete) {
+      router.replace("/onboarding");
+    }
+  }, [hasHydrated, profileComplete]);
+
+  useEffect(() => {
+    if (!hasHydrated || !profileComplete) return;
+
     Animated.parallel([
       Animated.timing(screenOpacity, {
         toValue: 1,
@@ -34,7 +47,22 @@ export default function Nutrition() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [screenOpacity, screenTranslateY]);
+  }, [hasHydrated, profileComplete, screenOpacity, screenTranslateY]);
+
+  if (!hasHydrated || !profileComplete) {
+    return <View style={{ flex: 1, backgroundColor: "#0B0B0B" }} />;
+  }
+
+  const currentWeight = toSafeProfileNumber(entries[0]?.weight) ?? profile.weight;
+  const calories = calculateCalories(
+    profile.gender,
+    profile.age,
+    currentWeight,
+    profile.height,
+    profile.goal
+  );
+  const protein = calculateProtein(currentWeight);
+  const plan = getNutritionPlan(profile.goal);
 
   return (
     <ScrollView

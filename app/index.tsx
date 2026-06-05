@@ -9,7 +9,10 @@ import {
 } from "react-native";
 
 import { PrimaryButton } from "../components/ui/PrimaryButton";
-import { useOnboardingStore } from "../store/onboardingStore";
+import {
+  isProfileComplete,
+  useOnboardingStore,
+} from "../store/onboardingStore";
 
 export default function Index() {
   const entranceOpacity = useRef(new Animated.Value(0)).current;
@@ -19,12 +22,31 @@ export default function Index() {
   const onboardingCompleted = useOnboardingStore(
     (state) => state.onboardingCompleted
   );
+  const setOnboardingCompleted = useOnboardingStore(
+    (state) => state.setOnboardingCompleted
+  );
+  const profileComplete = useOnboardingStore((state) =>
+    isProfileComplete(state)
+  );
 
   useEffect(() => {
-    if (hasHydrated && onboardingCompleted) {
+    if (!hasHydrated) return;
+
+    if (onboardingCompleted && !profileComplete) {
+      setOnboardingCompleted(false);
+      router.replace("/onboarding");
+      return;
+    }
+
+    if (onboardingCompleted) {
       router.replace("/(tabs)/dashboard");
     }
-  }, [hasHydrated, onboardingCompleted]);
+  }, [
+    hasHydrated,
+    onboardingCompleted,
+    profileComplete,
+    setOnboardingCompleted,
+  ]);
 
   useEffect(() => {
     if (!hasHydrated || onboardingCompleted) return;
