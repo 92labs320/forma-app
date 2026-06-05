@@ -81,19 +81,21 @@ interface OnboardingState {
   reset: () => void;
 }
 
-function sanitizeOnboardingFields(
-  state: Partial<OnboardingFields> | null | undefined
-): OnboardingFields {
-  const sanitized = {
+function sanitizeProfileValues(
+  state: Partial<OnboardingFields> | Partial<SanitizedProfile> | null | undefined
+): SanitizedProfile {
+  const unitSystem = isUnitSystem(state?.unitSystem)
+    ? state.unitSystem
+    : getDefaultUnitSystem();
+
+  const sanitizedProfile = {
     goal: emptyText(state?.goal) || initialOnboardingState.goal,
     gender: emptyText(state?.gender) || initialOnboardingState.gender,
-    age: safeNumberText(state?.age),
-    height: safeNumberText(state?.height),
-    weight: safeNumberText(state?.weight),
-    targetWeight: safeNumberText(state?.targetWeight),
-    unitSystem: isUnitSystem(state?.unitSystem)
-      ? state.unitSystem
-      : getDefaultUnitSystem(),
+    age: toSafeProfileNumber(state?.age),
+    height: toSafeProfileNumber(state?.height),
+    weight: toSafeProfileNumber(state?.weight),
+    targetWeight: toSafeProfileNumber(state?.targetWeight),
+    unitSystem,
     onboardingCompleted:
       typeof state?.onboardingCompleted === "boolean"
         ? state.onboardingCompleted
@@ -101,56 +103,52 @@ function sanitizeOnboardingFields(
   };
 
   return {
-    ...sanitized,
+    ...sanitizedProfile,
     onboardingCompleted:
-      sanitized.onboardingCompleted && isProfileComplete(sanitized),
+      sanitizedProfile.onboardingCompleted &&
+      hasRequiredProfileNumbers(sanitizedProfile),
   };
+}
+
+function hasRequiredProfileNumbers(profile: SanitizedProfile) {
+  return Boolean(
+    profile.age !== null &&
+      profile.height !== null &&
+      profile.weight !== null &&
+      profile.targetWeight !== null &&
+      isUnitSystem(profile.unitSystem)
+  );
+}
+
+function sanitizeOnboardingFields(
+  state: Partial<OnboardingFields> | Partial<SanitizedProfile> | null | undefined
+): OnboardingFields {
+  const sanitizedProfile = sanitizeProfileValues(state);
+
+  const sanitized = {
+    goal: sanitizedProfile.goal,
+    gender: sanitizedProfile.gender,
+    age: safeNumberText(sanitizedProfile.age),
+    height: safeNumberText(sanitizedProfile.height),
+    weight: safeNumberText(sanitizedProfile.weight),
+    targetWeight: safeNumberText(sanitizedProfile.targetWeight),
+    unitSystem: sanitizedProfile.unitSystem,
+    onboardingCompleted: sanitizedProfile.onboardingCompleted,
+  };
+
+  return sanitized;
 }
 
 export function getSanitizedProfile(
   profile: Partial<OnboardingFields> | null | undefined
 ): SanitizedProfile {
-  const unitSystem = isUnitSystem(profile?.unitSystem)
-    ? profile.unitSystem
-    : getDefaultUnitSystem();
-
-  const sanitizedProfile = {
-    goal: emptyText(profile?.goal) || initialOnboardingState.goal,
-    gender: emptyText(profile?.gender) || initialOnboardingState.gender,
-    age: toSafeProfileNumber(profile?.age),
-    height: toSafeProfileNumber(profile?.height),
-    weight: toSafeProfileNumber(profile?.weight),
-    targetWeight: toSafeProfileNumber(profile?.targetWeight),
-    unitSystem,
-    onboardingCompleted:
-      typeof profile?.onboardingCompleted === "boolean"
-        ? profile.onboardingCompleted
-        : false,
-  };
-
-  return {
-    ...sanitizedProfile,
-    onboardingCompleted:
-      sanitizedProfile.onboardingCompleted &&
-      isProfileComplete(sanitizedProfile),
-  };
+  return sanitizeProfileValues(profile);
 }
 
 export function isProfileComplete(
   profile: Partial<OnboardingFields> | Partial<SanitizedProfile> | null | undefined
 ) {
-  const age = toSafeProfileNumber(profile?.age);
-  const height = toSafeProfileNumber(profile?.height);
-  const weight = toSafeProfileNumber(profile?.weight);
-  const targetWeight = toSafeProfileNumber(profile?.targetWeight);
-
-  return Boolean(
-    age !== null &&
-      height !== null &&
-      weight !== null &&
-      targetWeight !== null &&
-      isUnitSystem(profile?.unitSystem)
-  );
+  return hasRequiredProfileNumbers(sanitizeProfileValues(profile));
 }
 
 const cleanPersistedState = (): StorageValue<OnboardingFields> => ({
@@ -217,7 +215,7 @@ const safeOnboardingStorage: PersistStorage<OnboardingFields> = {
 
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialOnboardingState,
       hasHydrated: false,
 
@@ -235,8 +233,15 @@ export const useOnboardingStore = create<OnboardingState>()(
             : getDefaultUnitSystem(),
         }),
       setOnboardingCompleted: (value) =>
-        set({
-          onboardingCompleted: typeof value === "boolean" ? value : false,
+        set((state) => {
+          const shouldComplete =
+            typeof value === "boolean" &&
+            value &&
+            isProfileComplete({ ...get(), ...state });
+
+          return {
+            onboardingCompleted: shouldComplete,
+          };
         }),
 
       reset: () =>
